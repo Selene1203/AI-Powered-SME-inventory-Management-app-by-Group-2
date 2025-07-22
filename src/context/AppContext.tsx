@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Product, Sale, InventoryStats, RestockSuggestion, SalesInsight } from '../types';
 import { supabase } from '../lib/supabase';
-import { sendSaleToMake, sendLowStockAlertToMake } from '../services/makeService';
+import { sendSaleToMake, sendLowStockAlertToMake, testMakeWebhookConnection } from '../services/makeService';
+import AIService from '../services/aiService';
 
 interface AppContextType {
   currentUser: User | null;
@@ -16,6 +17,8 @@ interface AppContextType {
   updateProduct: (productId: string, updates: Partial<Product>) => void;
   getCurrentSale: () => { items: Array<{ product: Product; quantity: number }>, total: number };
   clearCurrentSale: () => void;
+  runAIAnalysis: () => Promise<void>;
+  testWebhookConnection: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -34,6 +37,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sales, setSales] = useState<Sale[]>([]);
   const [currentSaleItems, setCurrentSaleItems] = useState<Array<{ product: Product; quantity: number }>>([]);
   const [loading, setLoading] = useState(false);
+  const [aiService, setAiService] = useState<AIService | null>(null);
 
   // Load data from Supabase when user logs in
   useEffect(() => {
@@ -42,6 +46,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       setProducts([]);
       setSales([]);
+      setAiService(null);
+    }
+  }, [currentUser]);
+
+  // Initialize AI service when user changes
+  useEffect(() => {
+    if (currentUser) {
+      setAiService(new AIService(currentUser.code));
     }
   }, [currentUser]);
 
@@ -244,6 +256,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCurrentSaleItems([]);
   };
 
+  const runAIAnalysis = async () => {
+    if (!aiService || !currentUser) return;
+    
+    setLoading(true);
+    try {
+      console.log('Running AI analysis...');
+      
+      // Run all AI analyses
+      await Promise.all([
+        aiService.generateDemandForecast(products, sales),
+        aiService.generateAIPredictions(products, sales),
+        aiService.generatePriceOptimization(products, sales),
+        aiService.analyzeCustomerBehavior(products, sales),
+        aiService.detectInventoryAnomalies(products, sales)
+      ]);
+      
+      console.log('AI analysis completed and sent to Make.com');
+    } catch (error) {
+      console.error('Error running AI analysis:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const testWebhookConnection = async (): Promise<boolean> => {
+    return await testMakeWebhookConnection();
+  };
+
   // Calculate inventory stats
   const inventoryStats: InventoryStats = {
     totalItems: products.reduce((sum, p) => sum + p.currentStock, 0),
@@ -297,7 +337,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addSale,
       updateProduct,
       getCurrentSale,
-      clearCurrentSale
+      clearCurrentSale,
+      runAIAnalysis,
+      testWebhookConnection
     }}>
       {children}
     </AppContext.Provider>
