@@ -1,0 +1,32 @@
+{
+    "type": "customer_behavior",
+    "data": {
+      "analysis_period": "last_30_days",
+      "top_selling_products": [
+        {
+          "productId": "prod_123",
+          "name": "Amoxicillin", 
+          "salesCount": 45,
+          "revenue": 1125.00
+        }
+      ],
+      "buying_patterns": {
+        "peakHours": ["10:00-12:00", "14:00-16:00"],
+        "averageTransactionValue": 75.50,
+        "frequentBuyers": 18
+      },
+      "customer_segments": [
+        {
+          "name": "Regular Customers",
+          "size": 60,
+          "characteristics": ["frequent_purchases", "brand_loyal"]
+        }
+      ],
+      "churn_risk_indicators": {
+        "highRisk": 15,
+        "mediumRisk": 25,
+        "lowRisk": 60
+      }
+    },
+    "priority": "medium"
+  }

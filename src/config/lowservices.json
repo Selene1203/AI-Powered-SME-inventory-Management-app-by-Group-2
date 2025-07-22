@@ -1,0 +1,20 @@
+{
+    "type": "low_stock_alert",
+    "data": {
+      "products": [
+        {
+          "id": "prod_123",
+          "name": "Amoxicillin",
+          "current_stock": 8,
+          "reorder_level": 20,
+          "days_until_stockout": 3,
+          "supplier_info": "Supplier A",
+          "lead_time": 7
+        }
+      ],
+      "total_affected_products": 1,
+      "estimated_revenue_impact": 2100.00,
+      "urgency_level": "critical"
+    },
+    "priority": "critical"
+  }

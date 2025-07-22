@@ -5,7 +5,7 @@ export const mockUsers: User[] = [
     id: '1',
     code: 'user_001',
     name: 'Maria Santos',
-    email: 'maria@yaronapharmacy.com',
+    email: 'sliqman42@gmail.com',
     businessName: 'Yarona Pharmacy'
   },
   {

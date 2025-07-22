@@ -125,7 +125,7 @@ CREATE POLICY "Users can insert own sales"
 
 -- Insert sample data
 INSERT INTO users (code, name, email, business_name) VALUES
-  ('user_001', 'Maria Santos', 'maria@yaronapharmacy.com', 'Yarona Pharmacy'),
+  ('user_001', 'Maria Santos', 'sliqman42@gmail.com', 'Yarona Pharmacy'),
   ('user_002', 'John Dela Cruz', 'john@healthplus.com', 'HealthPlus Clinic')
 ON CONFLICT (email) DO NOTHING;
 

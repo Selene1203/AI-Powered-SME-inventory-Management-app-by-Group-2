@@ -1,0 +1,13 @@
+{
+    "type": "sale",
+    "data": {
+      "sale_id": "unique_id",
+      "product_id": "product_123",
+      "quantity": 2,
+      "total_amount": 150.00,
+      "timestamp": "2025-01-15T10:30:00Z",
+      "customer_type": "walk_in"
+    },
+    "priority": "medium",
+    "user_code": "user_123"
+  }

@@ -1,0 +1,14 @@
+{
+    "type": "demand_forecast",
+    "data": {
+      "product_id": "product_123",
+      "product_name": "Amoxicillin",
+      "current_stock": 15,
+      "predicted_demand": 45,
+      "forecast_period": "monthly",
+      "seasonal_factors": {"winter": 1.2, "spring": 1.0},
+      "trend_direction": "increasing",
+      "recommended_action": "reorder_immediately"
+    },
+    "priority": "high"
+  }

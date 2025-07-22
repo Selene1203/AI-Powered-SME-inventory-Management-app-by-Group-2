@@ -1,0 +1,12 @@
+{
+    "type": "ai_prediction", 
+    "data": {
+      "prediction_type": "demand|restock|price",
+      "product_id": "product_123",
+      "predicted_value": 150,
+      "confidence_score": 0.85,
+      "time_horizon": "7_days",
+      "factors": ["historical_sales", "seasonal_trends"]
+    },
+    "priority": "high"
+  }

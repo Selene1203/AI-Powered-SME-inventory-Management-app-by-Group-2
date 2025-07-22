@@ -1,0 +1,17 @@
+{
+    "type": "price_optimization",
+    "data": {
+      "product_id": "product_123",
+      "current_price": 25.00,
+      "suggested_price": 26.25,
+      "price_change_percentage": 5.0,
+      "expected_impact": {
+        "salesVolume": -5,
+        "revenue": 3,
+        "profit": 5
+      },
+      "competitor_prices": [24.50, 25.75, 24.95],
+      "demand_elasticity": -1.2
+    },
+    "priority": "medium"
+  }
