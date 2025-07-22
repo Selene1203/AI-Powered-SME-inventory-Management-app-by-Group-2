@@ -16,9 +16,10 @@ const RestockSuggestions: React.FC = () => {
     setIsRunningAnalysis(true);
     try {
       await runAIAnalysis();
-      alert('AI analysis completed! Check your Make.com scenarios for the latest data.');
+      // Show success message - in production, use a proper toast/notification system
+      console.log('AI analysis completed! Check your Make.com scenarios for the latest data.');
     } catch (error) {
-      alert('Error running AI analysis. Please try again.');
+      console.error('Error running AI analysis. Please try again.', error);
     } finally {
       setIsRunningAnalysis(false);
     }

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { sendSaleToMake, sendLowStockAlertToMake, testMakeWebhookConnection } from '../services/makeService';
 import AIService from '../services/aiService';
 
+// Define what our app context provides to all components
 interface AppContextType {
   currentUser: User | null;
   products: Product[];
@@ -21,8 +22,10 @@ interface AppContextType {
   testWebhookConnection: () => Promise<boolean>;
 }
 
+// Create the context (this is like a global state for our app)
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Hook to use the app context in components
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
@@ -31,6 +34,7 @@ export const useApp = () => {
   return context;
 };
 
+// Main provider component that wraps our entire app
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -39,7 +43,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [loading, setLoading] = useState(false);
   const [aiService, setAiService] = useState<AIService | null>(null);
 
-  // Load data from Supabase when user logs in
+  // Load user data when someone logs in
+  // This runs automatically when currentUser changes
   useEffect(() => {
     if (currentUser) {
       loadUserData();
@@ -50,7 +55,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [currentUser]);
 
-  // Initialize AI service when user changes
+  // Set up AI service for the current user
+  // Each user gets their own AI service instance
   useEffect(() => {
     if (currentUser) {
       setAiService(new AIService(currentUser.code));
@@ -58,7 +64,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [currentUser]);
 
   const loadUserData = async () => {
+    // Don't try to load data if no user is logged in
     if (!currentUser) return;
+    
+    // If Supabase is not configured, use mock data
+    if (!supabase) {
+      console.warn('Supabase not configured, using mock data');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -116,8 +129,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Simple login function - checks email and password
   const login = (email: string, password: string): boolean => {
-    // Simple login check - in real app this would connect to database
+    // In a real app, this would check against a database
     if (email === 'maria@yaronapharmacy.com' && password === 'password') {
       const userData: User = {
         id: '1',
@@ -140,15 +154,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCurrentUser(userData);
       return true;
     }
-    // If login fails
+    // Return false if login credentials don't match
     return false;
   };
 
+  // Log out the current user
   const logout = () => {
     setCurrentUser(null);
     setCurrentSaleItems([]);
   };
 
+  // Add a sale (when someone buys something)
   const addSale = async (productId: string, quantity: number) => {
     const product = products.find(p => p.id === productId);
     if (product && currentUser) {
@@ -178,28 +194,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       try {
         // Save sale to Supabase
-        const { error: saleError } = await supabase
-          .from('sales')
-          .insert({
-            user_code: currentUser.code,
-            product_id: productId,
-            quantity,
-            total_amount: product.price * quantity,
-            timestamp: new Date().toISOString(),
-          });
+        if (supabase) {
+          const { error: saleError } = await supabase
+            .from('sales')
+            .insert({
+              user_code: currentUser.code,
+              product_id: productId,
+              quantity,
+              total_amount: product.price * quantity,
+              timestamp: new Date().toISOString(),
+            });
 
-        if (saleError) throw saleError;
+          if (saleError) throw saleError;
 
-        // Update product stock in Supabase
-        const { error: productError } = await supabase
-          .from('products')
-          .update({ 
-            current_stock: product.currentStock - quantity,
-            last_sold: new Date().toISOString()
-          })
-          .eq('id', productId);
+          // Update product stock in Supabase
+          const { error: productError } = await supabase
+            .from('products')
+            .update({ 
+              current_stock: product.currentStock - quantity,
+              last_sold: new Date().toISOString()
+            })
+            .eq('id', productId);
 
-        if (productError) throw productError;
+          if (productError) throw productError;
+        }
 
         // Send sale data to Make.com
         await sendSaleToMake(newSale, currentUser.code);
@@ -221,22 +239,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Update product information
   const updateProduct = async (productId: string, updates: Partial<Product>) => {
     try {
       // Update in Supabase
-      const supabaseUpdates: any = {};
-      if (updates.name) supabaseUpdates.name = updates.name;
-      if (updates.price) supabaseUpdates.price = updates.price;
-      if (updates.currentStock !== undefined) supabaseUpdates.current_stock = updates.currentStock;
-      if (updates.category) supabaseUpdates.category = updates.category;
-      if (updates.reorderLevel) supabaseUpdates.reorder_level = updates.reorderLevel;
+      if (supabase) {
+        const supabaseUpdates: any = {};
+        if (updates.name) supabaseUpdates.name = updates.name;
+        if (updates.price) supabaseUpdates.price = updates.price;
+        if (updates.currentStock !== undefined) supabaseUpdates.current_stock = updates.currentStock;
+        if (updates.category) supabaseUpdates.category = updates.category;
+        if (updates.reorderLevel) supabaseUpdates.reorder_level = updates.reorderLevel;
 
-      const { error } = await supabase
-        .from('products')
-        .update(supabaseUpdates)
-        .eq('id', productId);
+        const { error } = await supabase
+          .from('products')
+          .update(supabaseUpdates)
+          .eq('id', productId);
 
-      if (error) throw error;
+        if (error) throw error;
+      }
     } catch (error) {
       console.error('Error updating product:', error);
     }
@@ -247,15 +268,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  // Get the current sale being processed
   const getCurrentSale = () => {
     const total = currentSaleItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
     return { items: currentSaleItems, total };
   };
 
+  // Clear the current sale (after completing it)
   const clearCurrentSale = () => {
     setCurrentSaleItems([]);
   };
 
+  // Run AI analysis on all products and sales
   const runAIAnalysis = async () => {
     if (!aiService || !currentUser) return;
     
@@ -280,11 +304,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Test if our webhook connection to Make.com is working
   const testWebhookConnection = async (): Promise<boolean> => {
     return await testMakeWebhookConnection();
   };
 
-  // Calculate inventory stats
+  // Calculate statistics about our inventory
+  // This gives us totals, low stock counts, etc.
   const inventoryStats: InventoryStats = {
     totalItems: products.reduce((sum, p) => sum + p.currentStock, 0),
     lowStock: products.filter(p => p.currentStock <= p.reorderLevel && p.currentStock > 0).length,
@@ -297,7 +323,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ]
   };
 
-  // Generate restock suggestions
+  // Create suggestions for what products to restock
   const restockSuggestions: RestockSuggestion[] = products
     .filter(p => p.currentStock <= p.reorderLevel)
     .map(p => ({
@@ -309,7 +335,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reason: p.currentStock === 0 ? 'Out of stock' : 'Low stock (3 units)'
     }));
 
-  // Generate sales insights
+  // Create insights about sales performance
   const salesInsights: SalesInsight[] = [
     {
       type: 'trend',
@@ -324,6 +350,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   ];
 
+  // Provide all the data and functions to child components
   return (
     <AppContext.Provider value={{
       currentUser,

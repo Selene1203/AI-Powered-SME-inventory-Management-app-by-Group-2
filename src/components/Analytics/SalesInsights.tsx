@@ -35,9 +35,9 @@ const SalesInsights: React.FC = () => {
     setIsRunningAnalysis(true);
     try {
       await runAIAnalysis();
-      alert('AI analysis completed! Advanced insights have been sent to your Make.com workflows.');
+      console.log('AI analysis completed! Advanced insights have been sent to your Make.com workflows.');
     } catch (error) {
-      alert('Error running AI analysis. Please check your webhook configuration.');
+      console.error('Error running AI analysis. Please check your webhook configuration.', error);
     } finally {
       setIsRunningAnalysis(false);
     }

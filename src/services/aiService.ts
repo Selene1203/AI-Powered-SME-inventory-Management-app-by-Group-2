@@ -1,6 +1,13 @@
-import { sendAIPredictionToMake, sendDemandForecastToMake, sendPriceOptimizationToMake, sendCustomerBehaviorToMake, sendInventoryAnomalyToMake } from './makeService';
+import { 
+  sendAIPredictionToMake, 
+  sendDemandForecastToMake, 
+  sendPriceOptimizationToMake, 
+  sendCustomerBehaviorToMake, 
+  sendInventoryAnomalyToMake 
+} from './makeService';
 import { Product, Sale } from '../types';
 
+// Simple AI prediction data structure
 export interface AIPrediction {
   type: 'demand' | 'restock' | 'price';
   productId: string;
@@ -11,6 +18,7 @@ export interface AIPrediction {
   accuracy?: number;
 }
 
+// Demand forecast data structure
 export interface DemandForecast {
   productId: string;
   productName: string;
@@ -23,6 +31,7 @@ export interface DemandForecast {
   dataPoints: number;
 }
 
+// Price optimization suggestions
 export interface PriceOptimization {
   productId: string;
   currentPrice: number;
@@ -39,6 +48,7 @@ export interface PriceOptimization {
   marketConditions: string;
 }
 
+// Customer behavior analysis
 export interface CustomerBehavior {
   period: string;
   topProducts: Array<{
@@ -72,6 +82,7 @@ export interface CustomerBehavior {
   dataQuality: number;
 }
 
+// Inventory anomaly detection
 export interface InventoryAnomaly {
   type: 'unusual_sales_spike' | 'unexpected_stockout' | 'supplier_delay' | 'demand_pattern_change';
   products: string[];
@@ -86,6 +97,7 @@ export interface InventoryAnomaly {
   confidence: number;
 }
 
+// Main AI Service class - handles all AI-related calculations
 class AIService {
   private userCode: string;
 
@@ -93,7 +105,8 @@ class AIService {
     this.userCode = userCode;
   }
 
-  // Generate demand predictions using historical sales data
+  // Generate demand forecasts for products
+  // This looks at past sales to predict future demand
   async generateDemandForecast(products: Product[], sales: Sale[]): Promise<DemandForecast[]> {
     const forecasts: DemandForecast[] = [];
 
@@ -109,7 +122,8 @@ class AIService {
     return forecasts;
   }
 
-  // Analyze sales patterns and generate predictions
+  // Generate AI predictions for demand, restocking, and pricing
+  // This is the main AI function that creates smart suggestions
   async generateAIPredictions(products: Product[], sales: Sale[]): Promise<AIPrediction[]> {
     const predictions: AIPrediction[] = [];
 
@@ -137,7 +151,7 @@ class AIService {
     return predictions;
   }
 
-  // Generate price optimization suggestions
+  // Suggest better prices for products based on sales data
   async generatePriceOptimization(products: Product[], sales: Sale[]): Promise<PriceOptimization[]> {
     const optimizations: PriceOptimization[] = [];
 
@@ -153,7 +167,7 @@ class AIService {
     return optimizations;
   }
 
-  // Analyze customer behavior patterns
+  // Analyze how customers buy products
   async analyzeCustomerBehavior(products: Product[], sales: Sale[]): Promise<CustomerBehavior> {
     const behavior = this.calculateCustomerBehavior(products, sales);
     
@@ -163,7 +177,7 @@ class AIService {
     return behavior;
   }
 
-  // Detect inventory anomalies
+  // Find unusual patterns in inventory (like sudden spikes in sales)
   async detectInventoryAnomalies(products: Product[], sales: Sale[]): Promise<InventoryAnomaly[]> {
     const anomalies: InventoryAnomaly[] = [];
 
@@ -187,46 +201,60 @@ class AIService {
     return anomalies;
   }
 
-  // Private helper methods
+  // Helper function: Calculate demand forecast for a single product
   private calculateDemandForecast(product: Product, sales: Sale[]): DemandForecast {
-    const recentSales = sales.slice(-30); // Last 30 sales
-    const avgDemand = recentSales.length > 0 ? recentSales.reduce((sum, s) => sum + s.quantity, 0) / recentSales.length : 1;
+    // Look at the last 30 sales for this product
+    const recentSales = sales.slice(-30);
+    // Calculate average demand (how much is sold on average)
+    const avgDemand = recentSales.length > 0 
+      ? recentSales.reduce((sum, s) => sum + s.quantity, 0) / recentSales.length 
+      : 1;
     
     return {
       productId: product.id,
       productName: product.name,
       currentStock: product.currentStock,
-      predictedDemand: Math.round(avgDemand * 30), // Monthly prediction
+      predictedDemand: Math.round(avgDemand * 30), // Predict for next 30 days
       period: 'monthly',
       seasonalFactors: {
-        winter: 1.2,
-        spring: 1.0,
-        summer: 0.8,
-        fall: 1.1
+        winter: 1.2, // 20% more sales in winter
+        spring: 1.0, // Normal sales in spring
+        summer: 0.8, // 20% less sales in summer
+        fall: 1.1    // 10% more sales in fall
       },
-      trend: avgDemand > 2 ? 'increasing' : avgDemand < 1 ? 'decreasing' : 'stable',
-      action: product.currentStock < avgDemand * 15 ? 'reorder_immediately' : 'monitor',
+      trend: avgDemand > 2 ? 'increasing' : avgDemand < 1 ? 'decreasing' : 'stable', // Is demand going up or down?
+      action: product.currentStock < avgDemand * 15 ? 'reorder_immediately' : 'monitor', // What should we do?
       dataPoints: sales.length
     };
   }
 
+  // Helper function: Predict demand for a product
   private predictDemand(product: Product, sales: Sale[]): AIPrediction {
-    const recentSales = sales.slice(-14); // Last 14 sales
-    const avgDemand = recentSales.length > 0 ? recentSales.reduce((sum, s) => sum + s.quantity, 0) / recentSales.length : 1;
+    // Look at recent sales (last 14)
+    const recentSales = sales.slice(-14);
+    // Calculate average demand
+    const avgDemand = recentSales.length > 0 
+      ? recentSales.reduce((sum, s) => sum + s.quantity, 0) / recentSales.length 
+      : 1;
     
     return {
       type: 'demand',
       productId: product.id,
-      value: Math.round(avgDemand * 7), // Weekly prediction
-      confidence: Math.min(0.95, 0.5 + (recentSales.length / 28)), // Higher confidence with more data
+      value: Math.round(avgDemand * 7), // Predict for next 7 days
+      confidence: Math.min(0.95, 0.5 + (recentSales.length / 28)), // More data = higher confidence
       timeHorizon: '7_days',
       factors: ['historical_sales', 'seasonal_trends', 'current_stock'],
       accuracy: 0.85
     };
   }
 
+  // Helper function: Predict when to restock
   private predictRestockTiming(product: Product, sales: Sale[]): AIPrediction {
-    const avgDailySales = sales.length > 0 ? sales.reduce((sum, s) => sum + s.quantity, 0) / sales.length : 1;
+    // Calculate how much we sell per day on average
+    const avgDailySales = sales.length > 0 
+      ? sales.reduce((sum, s) => sum + s.quantity, 0) / sales.length 
+      : 1;
+    // Calculate how many days until we run out
     const daysUntilRestock = Math.floor(product.currentStock / avgDailySales);
     
     return {
@@ -240,6 +268,7 @@ class AIService {
     };
   }
 
+  // Helper function: Suggest optimal price
   private predictOptimalPrice(product: Product, sales: Sale[]): AIPrediction {
     const currentPrice = product.price;
     const salesVelocity = sales.length / 30; // Sales per day
@@ -260,6 +289,7 @@ class AIService {
     };
   }
 
+  // Helper function: Calculate price optimization
   private calculatePriceOptimization(product: Product, sales: Sale[]): PriceOptimization {
     const currentPrice = product.price;
     const salesVelocity = sales.length / 30;
@@ -282,6 +312,7 @@ class AIService {
     };
   }
 
+  // Helper function: Analyze customer buying patterns
   private calculateCustomerBehavior(products: Product[], sales: Sale[]): CustomerBehavior {
     const topProducts = products
       .map(p => ({
@@ -325,6 +356,7 @@ class AIService {
     };
   }
 
+  // Helper function: Find unusual sales spikes
   private detectSalesSpikes(products: Product[], sales: Sale[]): InventoryAnomaly[] {
     const anomalies: InventoryAnomaly[] = [];
     
@@ -354,6 +386,7 @@ class AIService {
     return anomalies;
   }
 
+  // Helper function: Find unexpected stockouts
   private detectUnexpectedStockouts(products: Product[], sales: Sale[]): InventoryAnomaly[] {
     const anomalies: InventoryAnomaly[] = [];
     
@@ -378,6 +411,7 @@ class AIService {
     return anomalies;
   }
 
+  // Helper function: Detect changes in demand patterns
   private detectDemandPatternChanges(products: Product[], sales: Sale[]): InventoryAnomaly[] {
     const anomalies: InventoryAnomaly[] = [];
     
@@ -408,4 +442,5 @@ class AIService {
   }
 }
 
+// Export the AIService class so other files can use it
 export default AIService;

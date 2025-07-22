@@ -20,7 +20,7 @@ const SalesEntry: React.FC = () => {
 
   const handleCompleteSale = () => {
     clearCurrentSale();
-    alert('Sale completed successfully!');
+    console.log('Sale completed successfully!');
   };
 
   return (

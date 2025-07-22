@@ -16,7 +16,7 @@ export const sendToMake = async (webhookData: MakeWebhookData, webhookUrl?: stri
   const targetUrl = webhookUrl || MAKE_WEBHOOK_URL;
   
   if (!targetUrl) {
-    console.warn('Make.com webhook URL not configured');
+    console.warn('Make.com webhook URL not configured - data would be sent in production');
     return false;
   }
 
