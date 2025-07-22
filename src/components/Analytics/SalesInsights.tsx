@@ -1,11 +1,12 @@
 import React from 'react';
-import { TrendingUp, Brain, BarChart3, PieChart } from 'lucide-react';
+import { TrendingUp, Brain, BarChart3, PieChart, Zap, Webhook } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 import { useApp } from '../../context/AppContext';
 import { formatCurrency, formatCurrencyShort } from '../../utils/currency';
 
 const SalesInsights: React.FC = () => {
-  const { salesInsights } = useApp();
+  const { salesInsights, runAIAnalysis } = useApp();
+  const [isRunningAnalysis, setIsRunningAnalysis] = React.useState(false);
 
   const monthlyData = [
     { month: 'Jan', sales: 180000 },
@@ -30,6 +31,18 @@ const SalesInsights: React.FC = () => {
     { name: 'Ibuprofen 400mg', sales: 750, growth: -3 }
   ];
 
+  const handleRunAIAnalysis = async () => {
+    setIsRunningAnalysis(true);
+    try {
+      await runAIAnalysis();
+      alert('AI analysis completed! Advanced insights have been sent to your Make.com workflows.');
+    } catch (error) {
+      alert('Error running AI analysis. Please check your webhook configuration.');
+    } finally {
+      setIsRunningAnalysis(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="mb-6">
@@ -40,6 +53,23 @@ const SalesInsights: React.FC = () => {
             <div className="flex items-center space-x-4 mt-1">
               <span className="px-2 py-1 bg-sky-100 text-sky-800 text-xs rounded-full">Inventory</span>
               <span className="text-gray-600 text-sm">Last 6 months</span>
+              <button
+                onClick={handleRunAIAnalysis}
+                disabled={isRunningAnalysis}
+                className="flex items-center space-x-1 px-3 py-1 bg-sky-500 text-white text-xs rounded-full hover:bg-sky-600 transition-colors disabled:opacity-50"
+              >
+                {isRunningAnalysis ? (
+                  <>
+                    <div className="w-3 h-3 border border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Running AI Analysis...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3 h-3" />
+                    <span>Run AI Analysis</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -136,10 +166,17 @@ const SalesInsights: React.FC = () => {
             <p className="text-gray-700 mb-4">
               Sales of cold medications have increased by 27% this week, suggesting a seasonal illness outbreak. 
               Consider increasing stock levels for related products like cough syrups and throat lozenges.
+              All AI insights are automatically sent to your Make.com workflows for automated decision-making.
             </p>
-            <button className="text-sky-600 text-sm hover:text-sky-700 font-medium">
-              View suggestions →
-            </button>
+            <div className="flex items-center space-x-4">
+              <button className="text-sky-600 text-sm hover:text-sky-700 font-medium">
+                View suggestions →
+              </button>
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <Webhook className="w-3 h-3" />
+                <span>Connected to Make.com</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
