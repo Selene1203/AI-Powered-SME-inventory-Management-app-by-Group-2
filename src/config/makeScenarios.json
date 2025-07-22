@@ -1,0 +1,137 @@
+{
+  "scenarios": [
+    {
+      "id": "sales_to_sheets",
+      "name": "Sales to Google Sheets",
+      "description": "Automatically add sales data to a Google Sheets spreadsheet",
+      "difficulty": "beginner",
+      "webhook_type": "sales",
+      "steps": [
+        {
+          "step": 1,
+          "module": "Webhooks",
+          "action": "Custom webhook",
+          "description": "Receives sale data from your inventory app"
+        },
+        {
+          "step": 2,
+          "module": "Google Sheets",
+          "action": "Add a row",
+          "description": "Adds a new row with sale information",
+          "mapping": {
+            "Product Name": "{{product_name}}",
+            "Quantity": "{{quantity}}",
+            "Amount": "{{total_amount}}",
+            "Date": "{{timestamp}}",
+            "Sale ID": "{{sale_id}}"
+          }
+        }
+      ],
+      "required_connections": ["Google Sheets"],
+      "estimated_setup_time": "10 minutes"
+    },
+    {
+      "id": "low_stock_email",
+      "name": "Low Stock Email Alerts",
+      "description": "Send email alerts when products are running low",
+      "difficulty": "beginner",
+      "webhook_type": "low_stock",
+      "steps": [
+        {
+          "step": 1,
+          "module": "Webhooks",
+          "action": "Custom webhook",
+          "description": "Receives low stock alerts from your inventory app"
+        },
+        {
+          "step": 2,
+          "module": "Filter",
+          "action": "Filter",
+          "description": "Only process high and critical urgency alerts",
+          "condition": "urgency_level = high OR urgency_level = critical"
+        },
+        {
+          "step": 3,
+          "module": "Email",
+          "action": "Send an email",
+          "description": "Send alert email to manager",
+          "template": {
+            "subject": "🚨 Low Stock Alert - {{total_affected_products}} products need restocking",
+            "body": "The following products are running low:\n\n{{#products}}- {{name}}: {{current_stock}} units left (reorder at {{reorder_level}})\n{{/products}}\n\nPlease reorder these items as soon as possible."
+          }
+        }
+      ],
+      "required_connections": ["Email (Gmail/Outlook)"],
+      "estimated_setup_time": "15 minutes"
+    },
+    {
+      "id": "ai_insights_slack",
+      "name": "AI Insights to Slack",
+      "description": "Post AI predictions and insights to a Slack channel",
+      "difficulty": "intermediate",
+      "webhook_type": "ai_predictions",
+      "steps": [
+        {
+          "step": 1,
+          "module": "Webhooks",
+          "action": "Custom webhook",
+          "description": "Receives AI predictions from your inventory app"
+        },
+        {
+          "step": 2,
+          "module": "Filter",
+          "action": "Filter",
+          "description": "Only process high-confidence predictions",
+          "condition": "confidence_score > 0.8"
+        },
+        {
+          "step": 3,
+          "module": "Slack",
+          "action": "Create a message",
+          "description": "Post prediction to Slack channel",
+          "template": {
+            "channel": "#inventory-alerts",
+            "message": "🤖 AI Prediction Alert\n\n*Product:* {{product_name}}\n*Prediction:* {{prediction_type}}\n*Value:* {{predicted_value}}\n*Confidence:* {{confidence_score}}%\n*Time Frame:* {{time_horizon}}"
+          }
+        }
+      ],
+      "required_connections": ["Slack"],
+      "estimated_setup_time": "20 minutes"
+    },
+    {
+      "id": "comprehensive_dashboard",
+      "name": "Business Intelligence Dashboard",
+      "description": "Send all data to a BI tool like Google Data Studio or Power BI",
+      "difficulty": "advanced",
+      "webhook_type": "all",
+      "steps": [
+        {
+          "step": 1,
+          "module": "Webhooks",
+          "action": "Custom webhook",
+          "description": "Receives all types of data from your inventory app"
+        },
+        {
+          "step": 2,
+          "module": "Router",
+          "action": "Router",
+          "description": "Route different data types to different destinations"
+        },
+        {
+          "step": 3,
+          "module": "Google Sheets",
+          "action": "Add a row",
+          "description": "Add to appropriate sheet based on data type"
+        },
+        {
+          "step": 4,
+          "module": "HTTP",
+          "action": "Make a request",
+          "description": "Send to external BI tool API"
+        }
+      ],
+      "required_connections": ["Google Sheets", "HTTP/API"],
+      "estimated_setup_time": "45 minutes"
+    }
+  ]
+}

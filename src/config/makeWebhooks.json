@@ -1,0 +1,80 @@
+{
+  "webhooks": {
+    "sales": {
+      "name": "Sales Tracking",
+      "description": "Tracks all sales transactions",
+      "url_env_var": "VITE_MAKE_WEBHOOK_URL",
+      "data_format": {
+        "type": "sale",
+        "sale_id": "string",
+        "product_id": "string",
+        "product_name": "string",
+        "quantity": "number",
+        "total_amount": "number",
+        "timestamp": "ISO date string",
+        "user_code": "string"
+      },
+      "example_data": {
+        "type": "sale",
+        "sale_id": "sale_123",
+        "product_id": "prod_456",
+        "product_name": "Paracetamol 500mg",
+        "quantity": 2,
+        "total_amount": 48.00,
+        "timestamp": "2024-01-15T10:30:00Z",
+        "user_code": "user_001"
+      }
+    },
+    "low_stock": {
+      "name": "Low Stock Alerts",
+      "description": "Alerts when products are running low",
+      "url_env_var": "VITE_MAKE_ALERTS_WEBHOOK_URL",
+      "data_format": {
+        "type": "low_stock_alert",
+        "products": "array of product objects",
+        "total_affected_products": "number",
+        "urgency_level": "string (critical/high/medium/low)"
+      },
+      "example_data": {
+        "type": "low_stock_alert",
+        "products": [
+          {
+            "id": "prod_123",
+            "name": "Amoxicillin 250mg",
+            "current_stock": 5,
+            "reorder_level": 20,
+            "days_until_stockout": 3
+          }
+        ],
+        "total_affected_products": 1,
+        "urgency_level": "high",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "user_code": "user_001"
+      }
+    },
+    "ai_predictions": {
+      "name": "AI Predictions",
+      "description": "AI-generated predictions and insights",
+      "url_env_var": "VITE_MAKE_AI_WEBHOOK_URL",
+      "data_format": {
+        "type": "ai_prediction",
+        "prediction_type": "string (demand/restock/price)",
+        "product_id": "string",
+        "predicted_value": "number",
+        "confidence_score": "number (0-1)",
+        "time_horizon": "string"
+      },
+      "example_data": {
+        "type": "ai_prediction",
+        "prediction_type": "demand",
+        "product_id": "prod_123",
+        "product_name": "Paracetamol 500mg",
+        "predicted_value": 14,
+        "confidence_score": 0.85,
+        "time_horizon": "7_days",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "user_code": "user_001"
+      }
+    }
+  }
+}
