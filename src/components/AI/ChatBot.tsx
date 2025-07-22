@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageSquare, Send, User, Bot, TrendingUp, Package, BarChart3 } from 'lucide-react';
+import { MessageSquare, Send, User, Bot, TrendingUp, Package, BarChart3, Zap, TestTube } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 interface Message {
@@ -10,29 +10,102 @@ interface Message {
 }
 
 const ChatBot: React.FC = () => {
-  const { currentUser } = useApp();
+  const { currentUser, runAIAnalysis, testWebhookConnection } = useApp();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       type: 'bot',
-      content: `Hello! I'm your Yarona Pharmacy AI assistant. How can I help you with inventory, sales, or forecasts today?`,
+      content: `Hello! I'm your ${currentUser?.businessName} AI assistant. I can help with inventory, sales, forecasts, and Make.com webhook integrations. How can I assist you today?`,
       timestamp: new Date()
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
 
   const quickActions = [
     { id: 'inventory', label: 'Inventory', icon: Package },
     { id: 'sales', label: 'Sales', icon: TrendingUp },
-    { id: 'forecast', label: 'Forecast', icon: BarChart3 }
+    { id: 'forecast', label: 'Forecast', icon: BarChart3 },
+    { id: 'ai_analysis', label: 'Run AI Analysis', icon: Zap },
+    { id: 'test_webhooks', label: 'Test Webhooks', icon: TestTube }
   ];
 
   const predefinedResponses = {
     inventory: "I've analyzed your inventory. You're running low on Amoxicillin (15 units) and Azithromycin (8 units). Both are below your set threshold of 20 units. Would you like me to prepare a restock order?",
     sales: "I've prepared a restock order. For last month's sales, antibiotics generated M15,420 in revenue, up 12% from the previous month. Amoxicillin was your top seller with 78 units sold.",
     forecast: "Would you like to see detailed sales analytics for antibiotics? I can prepare a report or you can check the Inventory Dashboard for a quick overview.",
+    ai_analysis: "I'm running a comprehensive AI analysis of your inventory data. This includes demand forecasting, price optimization, customer behavior analysis, and anomaly detection. All results will be sent to your Make.com webhooks for further processing.",
+    test_webhooks: "I'm testing the connection to your Make.com webhooks. This will verify that all webhook endpoints are properly configured and responding.",
     default: "I'm here to help with inventory management, sales analysis, and forecasting. You can ask me about stock levels, reorder suggestions, sales trends, or anything else related to your pharmacy operations."
+  };
+
+  const handleRunAIAnalysis = async () => {
+    setIsRunningAnalysis(true);
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: 'Run comprehensive AI analysis',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    try {
+      await runAIAnalysis();
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: 'AI analysis completed successfully! I\'ve generated demand forecasts, price optimizations, customer behavior insights, and anomaly detections. All data has been sent to your Make.com webhooks for further processing and automation.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: 'There was an error running the AI analysis. Please check your webhook configuration and try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+      setIsRunningAnalysis(false);
+    }
+  };
+
+  const handleTestWebhooks = async () => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: 'Test webhook connections',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    try {
+      const success = await testWebhookConnection();
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: success 
+          ? 'Webhook connection test successful! All Make.com endpoints are responding properly.'
+          : 'Webhook connection test failed. Please check your Make.com webhook URLs in the environment variables.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: 'Error testing webhook connections. Please verify your configuration.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSendMessage = (content: string) => {
@@ -59,6 +132,10 @@ const ChatBot: React.FC = () => {
         botResponse = predefinedResponses.sales;
       } else if (content.toLowerCase().includes('forecast') || content.toLowerCase().includes('analytics')) {
         botResponse = predefinedResponses.forecast;
+      } else if (content.toLowerCase().includes('ai analysis') || content.toLowerCase().includes('run analysis')) {
+        botResponse = predefinedResponses.ai_analysis;
+      } else if (content.toLowerCase().includes('test webhook') || content.toLowerCase().includes('webhook test')) {
+        botResponse = predefinedResponses.test_webhooks;
       }
 
       const aiMessage: Message = {
@@ -85,6 +162,12 @@ const ChatBot: React.FC = () => {
       case 'forecast':
         message = 'Would you like to see detailed sales analytics for antibiotics?';
         break;
+      case 'ai_analysis':
+        handleRunAIAnalysis();
+        return;
+      case 'test_webhooks':
+        handleTestWebhooks();
+        return;
     }
     handleSendMessage(message);
   };
@@ -176,14 +259,22 @@ const ChatBot: React.FC = () => {
           <div className="flex space-x-2 mb-4">
             {quickActions.map((action) => {
               const Icon = action.icon;
+              const isDisabled = (action.id === 'ai_analysis' && isRunningAnalysis);
               return (
                 <button
                   key={action.id}
                   onClick={() => handleQuickAction(action.id)}
-                  className="flex items-center space-x-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  disabled={isDisabled}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                    isDisabled 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
                 >
-                  <Icon className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm text-gray-700">{action.label}</span>
+                  <Icon className={`w-4 h-4 ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`} />
+                  <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                    {action.id === 'ai_analysis' && isRunningAnalysis ? 'Running...' : action.label}
+                  </span>
                 </button>
               );
             })}
