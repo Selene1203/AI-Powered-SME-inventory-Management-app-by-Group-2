@@ -1,14 +1,27 @@
 import React from 'react';
-import { Brain, Package, AlertCircle, CheckCircle } from 'lucide-react';
+import { Brain, Package, AlertCircle, CheckCircle, Zap, Send } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 const RestockSuggestions: React.FC = () => {
-  const { restockSuggestions } = useApp();
+  const { restockSuggestions, runAIAnalysis } = useApp();
+  const [isRunningAnalysis, setIsRunningAnalysis] = React.useState(false);
 
   const priorityColors = {
     high: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-800', icon: 'text-red-600' },
     medium: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-800', icon: 'text-orange-600' },
     low: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-800', icon: 'text-blue-600' }
+  };
+
+  const handleRunAIAnalysis = async () => {
+    setIsRunningAnalysis(true);
+    try {
+      await runAIAnalysis();
+      alert('AI analysis completed! Check your Make.com scenarios for the latest data.');
+    } catch (error) {
+      alert('Error running AI analysis. Please try again.');
+    } finally {
+      setIsRunningAnalysis(false);
+    }
   };
 
   return (
@@ -32,9 +45,26 @@ const RestockSuggestions: React.FC = () => {
             <p className="text-sky-100 text-sm leading-relaxed">
               Based on your sales data and current inventory levels, we recommend restocking the following 
               items to maintain optimal stock levels. Our AI analyzes seasonal trends, sales velocity, 
-              and demand patterns to suggest the right quantities.
+              and demand patterns to suggest the right quantities. All insights are automatically sent to your Make.com workflows.
             </p>
           </div>
+          <button
+            onClick={handleRunAIAnalysis}
+            disabled={isRunningAnalysis}
+            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isRunningAnalysis ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span className="text-sm">Running...</span>
+              </>
+            ) : (
+              <>
+                <Zap className="w-4 h-4" />
+                <span className="text-sm">Run AI Analysis</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
 
@@ -104,10 +134,10 @@ const RestockSuggestions: React.FC = () => {
 
       {/* Bottom Actions */}
       <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="font-semibold text-gray-900">Bulk Actions</h3>
-            <p className="text-sm text-gray-600">Manage multiple suggestions at once</p>
+            <p className="text-sm text-gray-600">Manage multiple suggestions and webhook integrations</p>
           </div>
           <div className="flex space-x-3">
             <button className="px-6 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors">
@@ -116,6 +146,16 @@ const RestockSuggestions: React.FC = () => {
             <button className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
               Order All Suggested
             </button>
+          </div>
+        </div>
+        
+        <div className="border-t pt-4">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Send className="w-4 h-4" />
+            <span>
+              All restock suggestions and AI insights are automatically sent to your Make.com webhooks for 
+              automated supplier ordering, inventory alerts, and business intelligence dashboards.
+            </span>
           </div>
         </div>
       </div>
