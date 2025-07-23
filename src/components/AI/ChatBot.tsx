@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MessageSquare, Send, User, Bot, TrendingUp, Package, BarChart3, Zap, TestTube } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { getWebhookConfig, getEmailTemplate, validateWebhookData, getMakeConfigStatus } from '../../utils/makeIntegration';
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ const ChatBot: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isRunningAnalysis, setIsRunningAnalysis] = useState(false);
+  const [configStatus, setConfigStatus] = useState(getMakeConfigStatus());
 
   const quickActions = [
     { id: 'inventory', label: 'Inventory', icon: Package },
@@ -29,6 +31,7 @@ const ChatBot: React.FC = () => {
     { id: 'forecast', label: 'Forecast', icon: BarChart3 },
     { id: 'ai_analysis', label: 'Run AI Analysis', icon: Zap },
     { id: 'test_webhooks', label: 'Test Webhooks', icon: TestTube }
+    { id: 'show_config', label: 'Show Config', icon: MessageSquare }
   ];
 
   const predefinedResponses = {
@@ -37,6 +40,7 @@ const ChatBot: React.FC = () => {
     forecast: "Would you like to see detailed sales analytics for antibiotics? I can prepare a report or you can check the Inventory Dashboard for a quick overview.",
     ai_analysis: "I'm running a comprehensive AI analysis of your inventory data. This includes demand forecasting, price optimization, customer behavior analysis, and anomaly detection. All results will be sent to your Make.com webhooks for further processing.",
     test_webhooks: "I'm testing the connection to your Make.com webhooks. This will verify that all webhook endpoints are properly configured and responding.",
+    show_config: "Here's your current Make.com configuration status. I can also show you example data formats and templates for setting up your scenarios.",
     default: "I'm here to help with inventory management, sales analysis, and forecasting. You can ask me about stock levels, reorder suggestions, sales trends, or anything else related to your pharmacy operations."
   };
 
@@ -74,6 +78,43 @@ const ChatBot: React.FC = () => {
     }
   };
 
+  const handleShowConfig = () => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      type: 'user',
+      content: 'Show Make.com configuration',
+      timestamp: new Date()
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const status = getMakeConfigStatus();
+      const salesConfig = getWebhookConfig('sales');
+      
+      let configMessage = `**Make.com Configuration Status:**\n\n`;
+      configMessage += `✅ Sales Webhook: ${status.sales_webhook ? 'Connected' : 'Not configured'}\n`;
+      configMessage += `✅ AI Webhook: ${status.ai_webhook ? 'Connected' : 'Not configured'}\n`;
+      configMessage += `✅ Analytics Webhook: ${status.analytics_webhook ? 'Connected' : 'Not configured'}\n`;
+      configMessage += `✅ Alerts Webhook: ${status.alerts_webhook ? 'Connected' : 'Not configured'}\n\n`;
+      
+      if (salesConfig) {
+        configMessage += `**Example Sales Data Format:**\n`;
+        configMessage += `\`\`\`json\n${JSON.stringify(salesConfig.example_data, null, 2)}\n\`\`\`\n\n`;
+      }
+      
+      configMessage += `Need help setting up? Check the JSON files in src/config/ for templates and examples!`;
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: 'bot',
+        content: configMessage,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, aiMessage]);
+      setIsTyping(false);
+    }, 1000);
+  };
   const handleTestWebhooks = async () => {
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -167,6 +208,9 @@ const ChatBot: React.FC = () => {
         return;
       case 'test_webhooks':
         handleTestWebhooks();
+        return;
+      case 'show_config':
+        handleShowConfig();
         return;
     }
     handleSendMessage(message);

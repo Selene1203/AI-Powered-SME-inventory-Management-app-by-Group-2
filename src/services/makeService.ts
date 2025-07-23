@@ -3,6 +3,8 @@ const MAKE_AI_WEBHOOK_URL = import.meta.env.VITE_MAKE_AI_WEBHOOK_URL;
 const MAKE_ANALYTICS_WEBHOOK_URL = import.meta.env.VITE_MAKE_ANALYTICS_WEBHOOK_URL;
 const MAKE_ALERTS_WEBHOOK_URL = import.meta.env.VITE_MAKE_ALERTS_WEBHOOK_URL;
 
+import { validateWebhookData, getWebhookConfig } from '../utils/makeIntegration';
+
 export interface MakeWebhookData {
   type: 'sale' | 'restock' | 'low_stock_alert' | 'ai_prediction' | 'demand_forecast' | 'price_optimization' | 'supplier_alert' | 'customer_behavior' | 'inventory_anomaly';
   data: any;
@@ -15,8 +17,16 @@ export interface MakeWebhookData {
 export const sendToMake = async (webhookData: MakeWebhookData, webhookUrl?: string): Promise<boolean> => {
   const targetUrl = webhookUrl || MAKE_WEBHOOK_URL;
   
+  // Validate webhook data using JSON config
+  const isValid = validateWebhookData(webhookData.type, webhookData.data);
+  if (!isValid) {
+    console.warn(`Invalid webhook data format for type: ${webhookData.type}`);
+    // Continue anyway for development, but log the issue
+  }
+  
   if (!targetUrl) {
     console.warn('Make.com webhook URL not configured - data would be sent in production');
+    console.log('Example webhook data:', webhookData);
     return false;
   }
 

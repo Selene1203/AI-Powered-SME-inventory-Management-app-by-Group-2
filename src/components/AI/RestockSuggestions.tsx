@@ -1,6 +1,7 @@
 import React from 'react';
 import { Brain, Package, AlertCircle, CheckCircle, Zap, Send } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { getEmailTemplate, replaceTemplateVariables } from '../../utils/makeIntegration';
 
 const RestockSuggestions: React.FC = () => {
   const { restockSuggestions, runAIAnalysis } = useApp();
@@ -16,8 +17,11 @@ const RestockSuggestions: React.FC = () => {
     setIsRunningAnalysis(true);
     try {
       await runAIAnalysis();
-      // Show success message - in production, use a proper toast/notification system
-      console.log('AI analysis completed! Check your Make.com scenarios for the latest data.');
+      
+      // Show example of what was sent to Make.com
+      const template = getEmailTemplate('low_stock_alert');
+      console.log('AI analysis completed! Example email template available:', template);
+      console.log('Check your Make.com scenarios for the latest data.');
     } catch (error) {
       console.error('Error running AI analysis. Please try again.', error);
     } finally {

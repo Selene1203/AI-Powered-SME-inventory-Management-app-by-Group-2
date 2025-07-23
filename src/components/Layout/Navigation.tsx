@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, ShoppingCart, Package, TrendingUp, MessageSquare, LogOut } from 'lucide-react';
+import { Home, ShoppingCart, Package, TrendingUp, MessageSquare, LogOut, Settings } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { getMakeConfigStatus } from '../../utils/makeIntegration';
 
 interface NavigationProps {
   currentView: string;
@@ -9,6 +10,7 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) => {
   const { currentUser, logout } = useApp();
+  const configStatus = getMakeConfigStatus();
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -16,6 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) =>
     { id: 'restock', label: 'Restock', icon: Package },
     { id: 'insights', label: 'Insights', icon: TrendingUp },
     { id: 'chat', label: 'Chat', icon: MessageSquare },
+    { id: 'config', label: 'Config', icon: Settings },
   ];
 
   return (
@@ -59,6 +62,12 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, onViewChange }) =>
             <span className="text-sm text-gray-600">
               Welcome, {currentUser?.name}
             </span>
+            {configStatus.overall_configured && (
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-green-600">Make.com Connected</span>
+              </div>
+            )}
             <button
               onClick={logout}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors"

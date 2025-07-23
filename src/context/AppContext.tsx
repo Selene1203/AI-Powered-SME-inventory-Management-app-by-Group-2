@@ -3,6 +3,7 @@ import { User, Product, Sale, InventoryStats, RestockSuggestion, SalesInsight } 
 import { supabase } from '../lib/supabase';
 import { sendSaleToMake, sendLowStockAlertToMake, testMakeWebhookConnection } from '../services/makeService';
 import AIServiceClass from '../services/aiservices';
+import { validateWebhookData, getMakeConfigStatus } from '../utils/makeIntegration';
 
 interface AppContextType {
   currentUser: User | null;
@@ -158,6 +159,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addSale = async (productId: string, quantity: number) => {
     const product = products.find(p => p.id === productId);
     if (product && currentUser) {
+      // Validate sale data before processing
+      const saleData = {
+        product_id: productId,
+        quantity,
+        total_amount: product.price * quantity,
+        timestamp: new Date().toISOString()
+      };
+      
+      const isValidSale = validateWebhookData('sale', saleData);
+      if (!isValidSale) {
+        console.warn('Sale data validation failed, but continuing...');
+      }
+      
       // Add to current sale
       const existingItem = currentSaleItems.find(item => item.product.id === productId);
       if (existingItem) {

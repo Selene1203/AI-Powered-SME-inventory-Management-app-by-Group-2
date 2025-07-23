@@ -1,11 +1,15 @@
 import React from 'react';
 import { Package, AlertTriangle, TrendingDown, Eye } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { getWebhookConfig, getSheetHeaders } from '../../utils/makeIntegration';
 
 const InventoryDashboard: React.FC = () => {
   const { inventoryStats, products, restockSuggestions } = useApp();
 
   const criticalItems = products.filter(p => p.currentStock <= p.reorderLevel);
+  
+  // Get Google Sheets headers for inventory tracking
+  const inventoryHeaders = getSheetHeaders('inventory_tracking');
 
   return (
     <div className="p-6 max-w-7xl mx-auto">

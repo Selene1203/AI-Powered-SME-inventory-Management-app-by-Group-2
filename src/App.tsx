@@ -7,6 +7,7 @@ import SalesEntry from './components/Sales/SalesEntry';
 import RestockSuggestions from './components/AI/RestockSuggestions';
 import SalesInsights from './components/Analytics/SalesInsights';
 import ChatBot from './components/AI/ChatBot';
+import ConfigurationHelper from './components/AI/ConfigurationHelper';
 
 const AppContent: React.FC = () => {
   const { currentUser } = useApp();
@@ -28,6 +29,8 @@ const AppContent: React.FC = () => {
         return <SalesInsights />;
       case 'chat':
         return <ChatBot />;
+      case 'config':
+        return <ConfigurationHelper />;
       default:
         return <InventoryDashboard />;
     }
