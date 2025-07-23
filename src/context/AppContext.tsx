@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Product, Sale, InventoryStats, RestockSuggestion, SalesInsight } from '../types';
 import { supabase } from '../lib/supabase';
 import { sendSaleToMake, sendLowStockAlertToMake, testMakeWebhookConnection } from '../services/makeService';
-import AIServiceClass from 'src/services/aiservices.ts';
+import AIServiceClass from '../services/aiservices';
 
 interface AppContextType {
   currentUser: User | null;
