@@ -30,7 +30,7 @@ const ChatBot: React.FC = () => {
     { id: 'sales', label: 'Sales', icon: TrendingUp },
     { id: 'forecast', label: 'Forecast', icon: BarChart3 },
     { id: 'ai_analysis', label: 'Run AI Analysis', icon: Zap },
-    { id: 'test_webhooks', label: 'Test Webhooks', icon: TestTube }
+    { id: 'test_webhooks', label: 'Test Webhooks', icon: TestTube },
     { id: 'show_config', label: 'Show Config', icon: MessageSquare }
   ];
 

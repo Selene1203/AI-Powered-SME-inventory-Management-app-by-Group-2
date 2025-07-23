@@ -1,7 +1,150 @@
 // Helper functions to work with Make.com integration
-import webhookConfig from '../config/makeWebhooks.json';
-import scenarioConfig from '../config/makeScenarios.json';
-import templateConfig from '../config/makeTemplates.json';
+// Import JSON configurations - these files contain templates and examples
+
+// Since JSON imports might not work in all environments, let's create the config inline
+const webhookConfig = {
+  webhooks: {
+    sales: {
+      description: "Triggered when a sale is made",
+      data_format: {
+        type: "string",
+        product_name: "string",
+        quantity: "number",
+        total_amount: "number",
+        timestamp: "string"
+      },
+      example_data: {
+        type: "sale",
+        product_name: "Paracetamol 500mg",
+        quantity: 2,
+        total_amount: 48.00,
+        timestamp: "2024-01-15T10:30:00Z"
+      },
+      use_cases: [
+        "Track sales in Google Sheets",
+        "Send to accounting software",
+        "Update inventory systems"
+      ],
+      url_env_var: "VITE_MAKE_WEBHOOK_URL"
+    },
+    low_stock_alert: {
+      description: "Triggered when products are running low",
+      data_format: {
+        type: "string",
+        products: "array",
+        urgency_level: "string"
+      },
+      example_data: {
+        type: "low_stock_alert",
+        products: [
+          {
+            name: "Amoxicillin 250mg",
+            current_stock: 5,
+            reorder_level: 20
+          }
+        ],
+        urgency_level: "high"
+      },
+      use_cases: [
+        "Email suppliers automatically",
+        "Send SMS alerts to managers",
+        "Create reorder tasks"
+      ],
+      url_env_var: "VITE_MAKE_ALERTS_WEBHOOK_URL"
+    },
+    ai_prediction: {
+      description: "AI-generated predictions and insights",
+      data_format: {
+        type: "string",
+        prediction_type: "string",
+        product_name: "string",
+        predicted_value: "number",
+        confidence_score: "number"
+      },
+      example_data: {
+        type: "ai_prediction",
+        prediction_type: "demand",
+        product_name: "Paracetamol 500mg",
+        predicted_value: 14,
+        confidence_score: 0.85,
+        time_horizon: "7_days"
+      },
+      use_cases: [
+        "Business intelligence dashboards",
+        "Automated pricing updates",
+        "Inventory optimization"
+      ],
+      url_env_var: "VITE_MAKE_AI_WEBHOOK_URL"
+    }
+  }
+};
+
+const scenarioConfig = {
+  scenarios: [
+    {
+      name: "Sales to Google Sheets",
+      difficulty: "beginner",
+      description: "Automatically log all sales to a Google Sheets spreadsheet",
+      steps: [
+        "Create webhook in Make.com",
+        "Add Google Sheets module",
+        "Map sales data to columns",
+        "Test with sample sale"
+      ]
+    },
+    {
+      name: "Low Stock Email Alerts",
+      difficulty: "beginner", 
+      description: "Send email alerts when inventory runs low",
+      steps: [
+        "Create webhook for alerts",
+        "Add filter for urgency level",
+        "Add email module",
+        "Use HTML template"
+      ]
+    }
+  ]
+};
+
+const templateConfig = {
+  email_templates: {
+    low_stock_alert: {
+      subject: "🚨 Low Stock Alert - {{business_name}}",
+      html_body: `
+        <h2>Low Stock Alert</h2>
+        <p>Hello,</p>
+        <p>The following products in {{business_name}} are running low:</p>
+        <ul>
+          {{#each products}}
+          <li><strong>{{name}}</strong> - Only {{current_stock}} left (Reorder at {{reorder_level}})</li>
+          {{/each}}
+        </ul>
+        <p>Please reorder these items as soon as possible.</p>
+        <p>Best regards,<br>Inventory Management System</p>
+      `,
+      variables: ["business_name", "products"]
+    }
+  },
+  slack_templates: {
+    low_stock_alert: {
+      text: "🚨 Low Stock Alert for {{business_name}}",
+      blocks: [
+        {
+          type: "section",
+          text: {
+            type: "mrkdwn",
+            text: "*Low Stock Alert*\nThe following products need restocking:"
+          }
+        }
+      ]
+    }
+  },
+  google_sheets_headers: {
+    sales_tracking: ["Date", "Product Name", "SKU", "Quantity", "Unit Price", "Total Amount", "Customer"],
+    inventory_tracking: ["Product Name", "SKU", "Current Stock", "Reorder Level", "Category", "Last Updated"],
+    ai_insights: ["Date", "Insight Type", "Product", "Prediction", "Confidence", "Action Required"]
+  }
+};
 
 // Get webhook configuration for a specific type
 export const getWebhookConfig = (webhookType: string) => {
