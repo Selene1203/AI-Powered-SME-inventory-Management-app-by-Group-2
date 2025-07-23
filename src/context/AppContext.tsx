@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Product, Sale, InventoryStats, RestockSuggestion, SalesInsight } from '../types';
 import { supabase } from '../lib/supabase';
 import { sendSaleToMake, sendLowStockAlertToMake, testMakeWebhookConnection } from '../services/makeService';
-import aiservices from 'src/services/aiservices.ts';
+import AIServiceClass from 'src/services/aiservices.ts';
 
 interface AppContextType {
   currentUser: User | null;
@@ -37,7 +37,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [sales, setSales] = useState<Sale[]>([]);
   const [currentSaleItems, setCurrentSaleItems] = useState<Array<{ product: Product; quantity: number }>>([]);
   const [loading, setLoading] = useState(false);
-  const [aiservices, setaiservices] = useState<aiservices | null>(null);
+  const [aiService, setAiService] = useState<AIServiceClass | null>(null);
 
   // Load data from Supabase when user logs in
   useEffect(() => {
@@ -46,19 +46,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       setProducts([]);
       setSales([]);
-      setaiservices(null);
+      setAiService(null);
     }
   }, [currentUser]);
 
   // Initialize AI service when user changes
   useEffect(() => {
     if (currentUser) {
-      setaiservices(new aiservices(currentUser.code));
+      setAiService(new AIServiceClass(currentUser.code));
     }
   }, [currentUser]);
 
   const loadUserData = async () => {
     if (!currentUser) return;
+    
+    // Check if supabase client is available
+    if (!supabase) {
+      console.error('Supabase client not initialized');
+      return;
+    }
     
     setLoading(true);
     try {
@@ -177,6 +183,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       try {
+        // Check if supabase client is available
+        if (!supabase) {
+          console.error('Supabase client not initialized');
+          return;
+        }
+
         // Save sale to Supabase
         const { error: saleError } = await supabase
           .from('sales')
@@ -223,6 +235,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateProduct = async (productId: string, updates: Partial<Product>) => {
     try {
+      // Check if supabase client is available
+      if (!supabase) {
+        console.error('Supabase client not initialized');
+        return;
+      }
+
       // Update in Supabase
       const supabaseUpdates: any = {};
       if (updates.name) supabaseUpdates.name = updates.name;
@@ -257,7 +275,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const runAIAnalysis = async () => {
-    if (!aiservices || !currentUser) return;
+    if (!aiService || !currentUser) return;
     
     setLoading(true);
     try {
@@ -265,11 +283,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       // Run all AI analyses
       await Promise.all([
-        aiservices.generateDemandForecast(products, sales),
-        aiservices.generateAIPredictions(products, sales),
-        aiservices.generatePriceOptimization(products, sales),
-        aiservices.analyzeCustomerBehavior(products, sales),
-        aiservices.detectInventoryAnomalies(products, sales)
+        aiService.generateDemandForecast(products, sales),
+        aiService.generateAIPredictions(products, sales),
+        aiService.generatePriceOptimization(products, sales),
+        aiService.analyzeCustomerBehavior(products, sales),
+        aiService.detectInventoryAnomalies(products, sales)
       ]);
       
       console.log('AI analysis completed and sent to Make.com');
